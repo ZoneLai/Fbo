@@ -66,10 +66,12 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        mTriangleRenderer.onStop();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mTriangleRenderer.onDestroy();
     }
 }
