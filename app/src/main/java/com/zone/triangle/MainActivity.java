@@ -9,11 +9,9 @@ import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 public class MainActivity extends BaseActivity {
     private GLSurfaceView mGLSurfaceView;
@@ -22,11 +20,15 @@ public class MainActivity extends BaseActivity {
     private Button mButton;
     private String mImgPath;
 
+    TriangleSurfaceView mTriangleSurfaceView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        initView();
+//        setContentView(R.layout.activity_main);
+//        initView();
+        mTriangleSurfaceView = new TriangleSurfaceView(this, null);
+        setContentView(mTriangleSurfaceView);
     }
 
     private void initView() {
@@ -63,15 +65,4 @@ public class MainActivity extends BaseActivity {
         }
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mTriangleRenderer.onStop();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mTriangleRenderer.onDestroy();
-    }
 }
