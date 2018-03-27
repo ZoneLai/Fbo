@@ -23,6 +23,7 @@ public class TriangleRenderer implements GLSurfaceView.Renderer {
     private static final int MAX_WIDGET_WIDTH = 1080;
     private static final int MAX_WIDGET_HEIGHT = 1920;
     private Context mContext;
+    private Bitmap mBitmap;
 
     static {
         System.loadLibrary("Triangle");
@@ -33,24 +34,25 @@ public class TriangleRenderer implements GLSurfaceView.Renderer {
         nativeOnCreate();
     }
 
+    public void setBitmap(Bitmap bitmap) {
+        mBitmap = bitmap;
+    }
+
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-        nativeInitGL(MAX_WIDGET_WIDTH, MAX_WIDGET_HEIGHT);
-        try {
-            InputStream inputStream = mContext.getAssets().open("cat.png");
-            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+        if (mBitmap != null && !mBitmap.isRecycled()) {
+            nativeInitGL(MAX_WIDGET_WIDTH, MAX_WIDGET_HEIGHT, mBitmap.getWidth(), mBitmap.getHeight());
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, nativeGetTextureId());
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-            bitmap.recycle();
-            inputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, mBitmap, 0);
         }
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
-        nativeOnSurfaceChanged(width, height);
+        if (mBitmap != null && !mBitmap.isRecycled()) {
+            nativeOnSurfaceChanged(width, height);
+            mBitmap.recycle();
+        }
     }
 
     @Override
@@ -77,7 +79,7 @@ public class TriangleRenderer implements GLSurfaceView.Renderer {
 
     private static native void nativeOnDestroy();
 
-    private static native void nativeInitGL(int widgetWidth, int widgetHeight);
+    private static native void nativeInitGL(int widgetWidth, int widgetHeight, int photoWidth, int photoHeigth);
 
     private static native void nativeDrawFrame();
 

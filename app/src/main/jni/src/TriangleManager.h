@@ -21,7 +21,7 @@ public:
     void                        onPause();
     void                        onStop();
     void                        onDestroy();
-    void                        initGL(int widgetWidth, int widgetHeight);
+    void                        initGL(int widgetWidth, int widgetHeight, int photoWidth, int photoHeight);
     void                        drawFrame();
     void                        onChange(int widgetWidth, int widgetHeight);
     void                        setAssetsBmp(AAssetManager* mgr, const char* fileName);
@@ -30,10 +30,14 @@ public:
 private:
     int                         _widgetWidth;
     int                         _widgetHeight;
+    int                         _photoWidth;
+    int                         _photoHeight;
     GLuint                      _sProgramPlay;
     GLuint						_vaoId;
     GLuint						_vboBuffer;
-    GLuint                      _textureId;
+    GLuint                      _frameBuffer;
+    GLuint                      _renderBuffer;
+    GLuint                      _textures[2];
     GLint						_positionLoc;
     GLint						_textCoordLoc;
     GLint						_mvpMatrixLoc;

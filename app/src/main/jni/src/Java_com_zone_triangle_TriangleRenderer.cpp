@@ -37,9 +37,9 @@ JNIEXPORT void JNICALL Java_com_zone_triangle_TriangleRenderer_nativeOnDestroy(J
 	TriangleManager::getSingleton().onDestroy();
 }
 
-JNIEXPORT void JNICALL Java_com_zone_triangle_TriangleRenderer_nativeInitGL(JNIEnv *env, jobject thiz, jint width, jint height)
+JNIEXPORT void JNICALL Java_com_zone_triangle_TriangleRenderer_nativeInitGL(JNIEnv *env, jobject thiz, jint width, jint height, jint photoWidth, jint photoHeight)
 {
-	TriangleManager::getSingleton().initGL(width, height);
+	TriangleManager::getSingleton().initGL(width, height, photoWidth, photoHeight);
 }
 
 JNIEXPORT void JNICALL Java_com_zone_triangle_TriangleRenderer_nativeDrawFrame(JNIEnv *env, jclass thiz)

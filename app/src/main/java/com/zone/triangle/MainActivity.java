@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -15,6 +16,8 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 public class MainActivity extends BaseActivity {
+    private GLSurfaceView mGLSurfaceView;
+    private TriangleRenderer mTriangleRenderer;
     private ImageView mImageView;
     private Button mButton;
     private String mImgPath;
@@ -27,6 +30,11 @@ public class MainActivity extends BaseActivity {
     }
 
     private void initView() {
+        mGLSurfaceView = findViewById(R.id.gl_view);
+        mGLSurfaceView.setEGLContextClientVersion(2);
+        mTriangleRenderer = new TriangleRenderer(this);
+        mGLSurfaceView.setRenderer(mTriangleRenderer);
+        mGLSurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
         mImageView = findViewById(R.id.iv_photo);
         mButton = findViewById(R.id.bt_select);
         mButton.setOnClickListener(new View.OnClickListener() {
@@ -48,13 +56,9 @@ public class MainActivity extends BaseActivity {
             c.moveToFirst();
             int columnIndex = c.getColumnIndex(filePathColumns[0]);
             mImgPath = c.getString(columnIndex);
-            final Bitmap bmp = BitmapFactory.decodeFile(mImgPath);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mImageView.setImageBitmap(bmp);
-                }
-            });
+            Bitmap bmp = BitmapFactory.decodeFile(mImgPath);
+            mTriangleRenderer.setBitmap(bmp);
+            mGLSurfaceView.requestRender();
             c.close();
         }
     }

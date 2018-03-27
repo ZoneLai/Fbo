@@ -11,10 +11,14 @@ template<> TriangleManager* Singleton<TriangleManager>::msSingleton = nullptr;
 TriangleManager::TriangleManager()
     : _widgetWidth(0)
     , _widgetHeight(0)
+    , _photoWidth(0)
+    , _photoHeight(0)
     , _sProgramPlay(0)
     , _vaoId(0)
     , _vboBuffer(0)
-    , _textureId(0)
+    , _frameBuffer(0)
+    , _renderBuffer(0)
+    , _textures{0}
     , _positionLoc(-1)
     , _textCoordLoc(-1)
     , _mvpMatrixLoc(-1)
@@ -45,7 +49,7 @@ void TriangleManager::onStop() {
 void TriangleManager::onDestroy() {
     glDeleteVertexArrays(1, &_vaoId);
     glDeleteBuffers(1, &_vboBuffer);
-    glDeleteTextures(1, &_textureId);
+    glDeleteTextures(2, _textures);
     glDeleteProgram(_sProgramPlay);
     if (_bmpBuffer != nullptr) {
         delete[] _bmpBuffer;
@@ -53,9 +57,11 @@ void TriangleManager::onDestroy() {
     }
 }
 
-void TriangleManager::initGL(int widgetWidth, int widgetHeight) {
-    _widgetWidth    = widgetWidth;
-    _widgetHeight   = widgetHeight;
+void TriangleManager::initGL(int widgetWidth, int widgetHeight, int photoWidth, int photoHeight) {
+    _widgetWidth            = widgetWidth;
+    _widgetHeight           = widgetHeight;
+    _photoWidth             = photoWidth;
+    _photoHeight            = photoHeight;
     if (CompileShaderProgram(camera_play_vert, camera_play_frag, &_sProgramPlay)) {
         _positionLoc	    = glGetAttribLocation(_sProgramPlay,    "a_Position");
         _textCoordLoc		= glGetAttribLocation(_sProgramPlay,    "a_TextCoord");
@@ -96,33 +102,56 @@ void TriangleManager::initGL(int widgetWidth, int widgetHeight) {
         glEnableVertexAttribArray(_textCoordLoc);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
-        // 创建纹理
-        glGenTextures(1, &_textureId);
-        glBindTexture(GL_TEXTURE_2D, _textureId);
+        // fbo && rbo
+        glGenFramebuffers(1, &_frameBuffer);
+        glGenRenderbuffers(1, &_renderBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, _renderBuffer);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, _photoWidth,_photoHeight);
+        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _renderBuffer);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // texture[0]
+        glGenTextures(2, _textures);
+        glBindTexture(GL_TEXTURE_2D, _textures[0]);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-       // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _imageWidth, _imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, _bmpBuffer);
+        // texImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, mBitmap, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
+        // texture[1]
+        glBindTexture(GL_TEXTURE_2D, _textures[1]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _photoWidth,_photoHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     } else {
         LOGE("CompileShaderProgram===================");
     }
 }
 
 void TriangleManager::drawFrame() {
+    LOGE("===========================");
     glViewport(0, 0, _widgetWidth, _widgetHeight);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _frameBuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _textures[1], 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _renderBuffer);
+
     glBindVertexArray(_vaoId);
     glUseProgram(_sProgramPlay);
     glUniformMatrix4fv(_mvpMatrixLoc, 1, GL_FALSE, glm::value_ptr(_mvpMatrix));
     // 启用纹理单元 绑定纹理对象
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _textureId);
+    glBindTexture(GL_TEXTURE_2D, _textures[0]);
     glUniform1i(_sampler2DLoc, 0);      // 设置纹理单元为0号
     glDrawArrays(GL_TRIANGLES, 0, 6);   // 顶点个数为6
     glBindVertexArray(0);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
 }
 
@@ -153,5 +182,5 @@ void TriangleManager::setAssetsBmp(AAssetManager* mgr,  const char* fileName) {
 }
 
 GLint TriangleManager::getCameraTextureId() {
-    return _textureId;
+    return _textures[0];
 }
