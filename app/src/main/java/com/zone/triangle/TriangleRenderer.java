@@ -40,24 +40,32 @@ public class TriangleRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
-        if (mBitmap != null && !mBitmap.isRecycled()) {
-            nativeInitGL(MAX_WIDGET_WIDTH, MAX_WIDGET_HEIGHT, mBitmap.getWidth(), mBitmap.getHeight());
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, nativeGetTextureId());
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, mBitmap, 0);
-        }
+//        if (mBitmap != null && !mBitmap.isRecycled()) {
+//            nativeInitGL(MAX_WIDGET_WIDTH, MAX_WIDGET_HEIGHT, mBitmap.getWidth(), mBitmap.getHeight());
+//            int i = nativeGetTextureId();
+//            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, nativeGetTextureId());
+//            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, mBitmap, 0);
+//        }
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         if (mBitmap != null && !mBitmap.isRecycled()) {
+            nativeInitGL(MAX_WIDGET_WIDTH, MAX_WIDGET_HEIGHT, mBitmap.getWidth(), mBitmap.getHeight());
+            int i = nativeGetTextureId();
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, nativeGetTextureId());
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, mBitmap, 0);
+
             nativeOnSurfaceChanged(width, height);
-            mBitmap.recycle();
         }
     }
 
     @Override
     public void onDrawFrame(GL10 gl10) {
-        nativeDrawFrame();
+        if (mBitmap != null && !mBitmap.isRecycled()) {
+            nativeDrawFrame();
+            mBitmap.recycle();
+        }
     }
 
     public void onStop() {
